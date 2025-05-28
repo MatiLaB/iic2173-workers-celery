@@ -5,6 +5,10 @@ from celery.schedules import crontab
 accept_content = ['application/json']
 CELERY_SERIALIZER = 'json'
 result_serializer = 'json'
+
+broker_url = 'redis://localhost:6379/0'
+result_backend = 'redis://localhost:6379/0'
+
 # Configure Celery to use a custom time zone.
 timezone = 'America/Santiago'
 # A sequence of modules to import when the worker starts

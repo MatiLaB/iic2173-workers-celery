@@ -71,6 +71,43 @@ services:
   #   environment:
   #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
   #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  redis:
+    image: redis:6.2-alpine
+    container_name: job_master_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data 
+
+  jobmaster:
+    build:
+      context: ./project
+      dockerfile: Dockerfile 
+    container_name: job_master_api
+    command: uvicorn project.main:app --host 0.0.0.0 --port 8000 
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app 
+    depends_on:
+      - redis
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  worker:
+    build:
+      context: ./project
+      dockerfile: Dockerfile
+    container_name: job_master_worker_1
+    command: celery -A project.main worker --loglevel=info 
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - jobmaster 
+    environment:
+      PYTHONUNBUFFERED: 1
 
 volumes:
   postgres_data:
