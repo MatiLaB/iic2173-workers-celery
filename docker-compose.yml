@@ -80,34 +80,86 @@ services:
     volumes:
       - redis_data:/data 
 
+  postgres:
+    image: postgres:13
+    container_name: job_master_postgres
+    ports:
+      - "3000:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data 
+
   jobmaster:
     build:
-      context: ./project
-      dockerfile: Dockerfile 
+      context: .
+      dockerfile: project/Dockerfile 
     container_name: job_master_api
     command: uvicorn project.main:app --host 0.0.0.0 --port 8000 
     ports:
-      - "8000:8000"
+      - "8000:8000" 
     volumes:
       - .:/app 
     depends_on:
-      - redis
+      - redis    
+      - postgres
     environment:
       PYTHONUNBUFFERED: 1
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB: ${REDIS_DB}
 
   worker:
     build:
-      context: ./project
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: project/Dockerfile
     container_name: job_master_worker_1
-    command: celery -A project.main worker --loglevel=info 
+    command: celery -A project.main worker --loglevel=info # Inicia un worker de Celery
     volumes:
       - .:/app
     depends_on:
       - redis
-      - jobmaster 
+      - jobmaster
+      - postgres
     environment:
       PYTHONUNBUFFERED: 1
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB: ${REDIS_DB}
+  celery_beat:
+    build:
+      context: .
+      dockerfile: project/Dockerfile
+    container_name: job_master_celery_beat
+    command: celery -A project.main beat --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      PYTHONUNBUFFERED: 1
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB: ${REDIS_DB}
 
 volumes:
+  redis_data:
   postgres_data:

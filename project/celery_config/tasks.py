@@ -4,7 +4,7 @@ from project.celery_config.controllers import (
     calculate_linear_approximation,
     get_stock_data_from_db,
     save_estimation_to_db,
-    sum_to_n # Si lo mantienes
+    sum_to_n
 )
 
 # standard
