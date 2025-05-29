@@ -4,3 +4,11 @@ fastapi==0.95.2
 flower==1.2.0
 python-dotenv==1.0.0
 uvicorn==0.22.0
+
+redis
+pydantic
+scikit-learn
+pandas
+numpy
+sqlalchemy
+psycopg2-binary
