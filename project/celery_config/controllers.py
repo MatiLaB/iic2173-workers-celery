@@ -2,7 +2,9 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
 from database import SessionLocal
+from models import StockPriceHistory, UserEstimatio
 
 def sum_to_n(number):
     sum = 0
