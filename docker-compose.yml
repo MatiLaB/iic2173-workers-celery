@@ -1,10 +1,14 @@
 services:
 
   redis-broker:
-    # https://redis.com/solutions/use-cases/messaging/
-    image: redis:7
+    image: redis:7 
+    container_name: job_master_redis_broker 
+    ports:
+      - "6379:6379" 
+    command: redis-server --appendonly yes 
     volumes:
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf 
+      - redis_data:/data 
 
   producer:
     build:
@@ -94,8 +98,8 @@ services:
 
   jobmaster:
     build:
-      context: .
-      dockerfile: project/Dockerfile 
+      context: ./project
+      dockerfile: Dockerfile
     container_name: job_master_api
     command: uvicorn project.main:app --host 0.0.0.0 --port 8000 
     ports:
@@ -118,8 +122,8 @@ services:
 
   worker:
     build:
-      context: .
-      dockerfile: project/Dockerfile
+      context: ./project
+      dockerfile: Dockerfile
     container_name: job_master_worker_1
     command: celery -A project.main worker --loglevel=info # Inicia un worker de Celery
     volumes:
