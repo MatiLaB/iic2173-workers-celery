@@ -1,5 +1,5 @@
-from project.database import engine
-from project.models import Base, StockPriceHistory, UserEstimation 
+from database import engine
+from models import Base, StockPriceHistory, UserEstimation 
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import random
