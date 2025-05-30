@@ -9,15 +9,10 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # install dependencies
-RUN pip install --upgrade pip
-COPY requirements.txt /app/requirements.txt
-RUN pip install -r /app/requirements.txt
-RUN pip install -r requirements.txt
-
+COPY requirements.txt ./
+RUN pip install --upgrade pip && pip install -r requirements.txt
 # copy project
-COPY . /app/
-COPY . /opt/
-COPY project/ .
+COPY . .
 
 EXPOSE 8000
 
