@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from datetime import datetime, timedelta
+from database import SessionLocal
 
 def sum_to_n(number):
     sum = 0
@@ -34,7 +35,7 @@ def calculate_linear_approximation(prices_and_dates):
     return projected_price
 
 def get_stock_data_from_db(symbol: str, num_points: int = 100):
-    db: Session = SessionLocal() #
+    db: Session = SessionLocal() 
     try:
         today = datetime.now()
         one_month_ago = today - timedelta(days=30)
