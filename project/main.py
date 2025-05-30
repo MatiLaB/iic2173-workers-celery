@@ -44,7 +44,7 @@ async def create_job(purchase_data: StockPurchaseData):
     if not purchase_data.purchase_id:
         purchase_data.purchase_id = str(uuid.uuid4()) 
     task = celery_app.send_task(
-        'project.celery_config.tasks.estimate_stock_gains_job',
+        'celery_config.tasks.estimate_stock_gains_job',
         args=[purchase_data.user_id, purchase_data.purchase_id, purchase_data.stocks]
     )
     
