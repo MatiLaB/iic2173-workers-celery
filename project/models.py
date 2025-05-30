@@ -7,7 +7,7 @@ from datetime import datetime
 class Number(BaseModel):
     number: int
 
-from project.database import Base, engine
+from database import Base, engine
 
 class StockPriceHistory(Base):
     __tablename__ = "stock_price_history"
