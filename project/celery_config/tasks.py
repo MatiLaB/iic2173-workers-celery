@@ -1,6 +1,6 @@
 # celery
 from celery import shared_task
-from project.celery_config.controllers import (
+from controllers import (
     calculate_linear_approximation,
     get_stock_data_from_db,
     save_estimation_to_db,

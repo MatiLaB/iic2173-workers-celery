@@ -21,36 +21,36 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  producer:
-    build:
-      context: ./project
-      dockerfile: Dockerfile
-    command: uvicorn producer:app --reload --host 0.0.0.0 --port 8000
-    volumes:
-      - ./project:/app
-    ports:
-      - '8002:8000'
-    environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-    depends_on:
-      - redis-broker
+  # producer:
+  #   build:
+  #     context: ./project
+  #     dockerfile: Dockerfile
+  #   command: uvicorn producer:app --reload --host 0.0.0.0 --port 8000
+  #   volumes:
+  #     - ./project:/app
+  #   ports:
+  #     - '8002:8000'
+  #   environment:
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  #   depends_on:
+  #     - redis-broker
 
-  consumer:
-    build:
-      context: ./project
-      dockerfile: Dockerfile
-    deploy:
-      replicas: 2
-    command: celery -A consumer.celery_app worker --loglevel=INFO --purge --concurrency=1
-    volumes:
-      - ./project:/app
-    depends_on:
-      - redis-broker
-      - postgres
-    environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  # consumer:
+  #   build:
+  #     context: ./project
+  #     dockerfile: Dockerfile
+  #   deploy:
+  #     replicas: 2
+  #   command: celery -A consumer.celery_app worker --loglevel=INFO --purge --concurrency=1
+  #   volumes:
+  #     - ./project:/app
+  #   depends_on:
+  #     - redis-broker
+  #     - postgres
+  #   environment:
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
 
   dashboard:
     build:

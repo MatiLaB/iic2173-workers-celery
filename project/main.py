@@ -5,7 +5,7 @@ from celery.result import AsyncResult
 import os
 import uuid
 
-from project.celery_config import config
+from celery_config import config
 
 celery_app = Celery(
     'job_master_celery_app',
