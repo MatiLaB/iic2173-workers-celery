@@ -1,5 +1,4 @@
 services:
-
   redis-broker:
     image: redis:7 
     container_name: job_master_redis_broker 
@@ -10,15 +9,25 @@ services:
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf 
       - redis_data:/data 
 
+  postgres:
+    image: postgres:13
+    container_name: job_master_postgres
+    ports:
+      - "3000:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
   producer:
     build:
-        context: ./project
-        dockerfile: Dockerfile
+      context: ./project
+      dockerfile: Dockerfile
     command: uvicorn producer:app --reload --host 0.0.0.0 --port 8000
     volumes:
-      - ./project:/opt/
-    expose:
-      - 8000
+      - ./project:/app
     ports:
       - '8000:8000'
     environment:
@@ -32,15 +41,13 @@ services:
       context: ./project
       dockerfile: Dockerfile
     deploy:
-      # replicas scales containers
       replicas: 2
-    # concurrency specifies number of worker
-    # purge deletes the broker queue every time it starts up
     command: celery -A consumer.celery_app worker --loglevel=INFO --purge --concurrency=1
     volumes:
-      - ./project:/opt/
+      - ./project:/app
     depends_on:
-      - producer
+      - redis-broker
+      - postgres
     environment:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
@@ -50,119 +57,90 @@ services:
       context: ./project
       dockerfile: Dockerfile
     command: bash -c "sleep 10; celery -A consumer.celery_app flower --loglevel=INFO --url_prefix=dashboard;"
-    expose:
-      - 5555
     ports:
       - '5555:5555'
     volumes:
-      - ./project:/opt/
+      - ./project:/app
     depends_on:
       - consumer
-      # - celery_beat
+      - redis-broker
     environment:
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-
-  # celery_beat:
-  #   build:
-  #     context: ./project
-  #     dockerfile: Dockerfile
-  #   command: celery -A consumer.celery_app beat --loglevel=INFO
-  #   volumes:
-  #     - ./project:/opt/
-  #   depends_on:
-  #     - producer
-  #   environment:
-  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-  redis:
-    image: redis:6.2-alpine
-    container_name: job_master_redis
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data 
-
-  postgres:
-    image: postgres:13
-    container_name: job_master_postgres
-    ports:
-      - "3000:5432"
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data 
 
   jobmaster:
     build:
       context: ./project
       dockerfile: Dockerfile
     container_name: job_master_api
-    command: uvicorn project.main:app --host 0.0.0.0 --port 8000 
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
     ports:
-      - "8000:8000" 
+      - "8000:8000"
     volumes:
-      - .:/app 
+      - ./project:/app
     depends_on:
-      - redis    
+      - redis-broker
       - postgres
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_DB: ${REDIS_DB}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis-broker
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
 
   worker:
     build:
       context: ./project
       dockerfile: Dockerfile
-    container_name: job_master_worker_1
-    command: celery -A project.main worker --loglevel=info # Inicia un worker de Celery
+    container_name: job_master_celery_worker_1
+    command: celery -A consumer.celery_app worker --loglevel=info
     volumes:
-      - .:/app
+      - ./project:/app
     depends_on:
-      - redis
-      - jobmaster
+      - redis-broker
       - postgres
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_DB: ${REDIS_DB}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis-broker
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+
   celery_beat:
     build:
-      context: .
-      dockerfile: project/Dockerfile
+      context: ./project
+      dockerfile: Dockerfile
     container_name: job_master_celery_beat
-    command: celery -A project.main beat --loglevel=info
+    command: celery -A consumer.celery_app beat --loglevel=info
     volumes:
-      - .:/app
+      - ./project:/app
     depends_on:
-      - redis
+      - redis-broker
       - postgres
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_DB: ${REDIS_DB}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_HOST: redis-broker
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
 
 volumes:
   redis_data:
