@@ -52,21 +52,21 @@ services:
   #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
   #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
 
-  dashboard:
-    build:
-      context: ./project
-      dockerfile: Dockerfile
-    command: bash -c "sleep 10; celery -A consumer.celery_app flower --loglevel=INFO --url_prefix=dashboard;"
-    ports:
-      - '5555:5555'
-    volumes:
-      - ./project:/app
-    depends_on:
-      - consumer
-      - redis-broker
-    environment:
-      CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  # dashboard:
+  #   build:
+  #     context: ./project
+  #     dockerfile: Dockerfile
+  #   command: bash -c "sleep 10; celery -A consumer.celery_app flower --loglevel=INFO --url_prefix=dashboard;"
+  #   ports:
+  #     - '5555:5555'
+  #   volumes:
+  #     - ./project:/app
+  #   depends_on:
+  #     - consumer
+  #     - redis-broker
+  #   environment:
+  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
 
   jobmaster:
     build:
