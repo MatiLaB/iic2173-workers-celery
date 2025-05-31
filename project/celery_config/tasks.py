@@ -41,7 +41,7 @@ def estimate_stock_gains_job(user_id: str, purchase_id: str, stocks_purchased: d
         print(f"Procesando stock: {symbol} (cantidad: {quantity})")
         try:
             # Obtener datos históricos de precios para el stock.
-            historical_prices = get_stock_data_from_db(user_id, symbol)
+            historical_prices =  get_stock_data_from_db(symbol)
             
             if not historical_prices or len(historical_prices) < 2:
                 print(f"Advertencia: No hay suficientes datos para {symbol}. Saltando estimación.")

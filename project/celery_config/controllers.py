@@ -36,29 +36,31 @@ def calculate_linear_approximation(prices_and_dates):
 
     return projected_price
 
-def get_stock_data_from_db(symbol: str, num_points: int = 100):
-    db: Session = SessionLocal() 
+def get_stock_data_from_db(user_id: str, symbol: str, num_points: int = 100):
+    db: Session = SessionLocal()
     try:
         today = datetime.now()
         one_month_ago = today - timedelta(days=30)
         historical_records = db.query(StockPriceHistory).\
-            filter(StockPriceHistory.symbol == symbol,
-                   StockPriceHistory.timestamp >= one_month_ago).\
+            filter(
+                StockPriceHistory.user_id == user_id,
+                StockPriceHistory.symbol == symbol,
+                StockPriceHistory.timestamp >= one_month_ago
+            ).\
             order_by(StockPriceHistory.timestamp.asc()).\
-            limit(num_points).all() # Limitamos para la regresión lineal
+            limit(num_points).all()
 
         if not historical_records:
-            print(f"No se encontraron datos históricos para {symbol} en el último mes.")
-            return [] # Retorna una lista vacía si no hay datos
+            print(f"No se encontraron datos históricos para {symbol} del usuario {user_id} en el último mes.")
+            return []
 
-    
         return [{'timestamp': record.timestamp.timestamp(), 'price': record.price}
                 for record in historical_records]
     except Exception as e:
-        print(f"Error al obtener datos históricos para {symbol}: {e}")
+        print(f"Error al obtener datos históricos para {symbol} del usuario {user_id}: {e}")
         return []
     finally:
-        db.close() 
+        db.close()
 
 
 def save_estimation_to_db(user_id: str, purchase_id: str, estimations: dict):
