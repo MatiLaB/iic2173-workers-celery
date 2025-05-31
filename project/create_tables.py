@@ -19,6 +19,7 @@ def init_db_and_insert_sample_data():
 
         print("Insertando datos de ejemplo en stock_price_history...")
         today = datetime.now()
+        sample_user_id = "test_user_1235"
         for symbol in ['AAPL', 'GOOG', 'MSFT']:
             for i in range(100):
                 date_offset_days = i * 30 / 99
@@ -29,7 +30,7 @@ def init_db_and_insert_sample_data():
                 elif symbol == 'MSFT': price = 200 + (date_offset_days * 0.7) + random.uniform(-3, 3)
                 else: price = random.uniform(50, 250) # Precio base para otros símbolos
 
-                db.add(StockPriceHistory(symbol=symbol, timestamp=date, price=price))
+                db.add(StockPriceHistory(user_id=sample_user_id, symbol=symbol, timestamp=date, price=price))
         db.commit()
         print("Datos de ejemplo insertados en stock_price_history.")
     except Exception as e:
