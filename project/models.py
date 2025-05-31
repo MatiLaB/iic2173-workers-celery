@@ -13,8 +13,9 @@ class StockPriceHistory(Base):
     __tablename__ = "stock_price_history"
 
     id = Column(Integer, primary_key=True, index=True)
-    symbol = Column(String, index=True, nullable=False) 
-    timestamp = Column(DateTime(timezone=True), nullable=False, default=func.now()) 
+    user_id = Column(String, index=True, nullable=False)
+    symbol = Column(String, index=True, nullable=False)
+    timestamp = Column(DateTime(timezone=True), nullable=False, default=func.now())
     price = Column(Float, nullable=False) 
 
     def __repr__(self):
