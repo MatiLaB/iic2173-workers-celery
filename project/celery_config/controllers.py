@@ -29,7 +29,7 @@ def calculate_linear_approximation(prices_and_dates):
     model.fit(X, y)
 
     last_day_relative = df['days_since_start'].max()
-    next_month_day_relative = last_day_relative + 30 # Proyectar 30 días hacia adelante
+    next_month_day_relative = last_day_relative + 30
 
     # Predecir el precio para el próximo mes
     projected_price = model.predict(np.array([[next_month_day_relative]]))[0]
