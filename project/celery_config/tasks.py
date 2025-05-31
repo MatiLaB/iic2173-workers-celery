@@ -10,6 +10,7 @@ from .controllers import (
 # standard
 import time
 import math 
+import numpy as np 
 
 # The "shared_task" decorator allows creation
 # of Celery tasks for reusable apps as it doesn't
@@ -54,13 +55,17 @@ def estimate_stock_gains_job(user_id: str, purchase_id: str, stocks_purchased: d
                 continue
 
             #Calcular la aproximación lineal y proyectar el precio.
-            projected_price_next_month = calculate_linear_approximation(
+            projected_price_next_month_np = calculate_linear_approximation(
                 [(item['timestamp'], item['price']) for item in historical_prices]
             )
 
+            projected_price_next_month = float(projected_price_next_month_np)
+
             #Multiplicar por la cantidad comprada
             current_price = historical_prices[-1]['price']
+            current_price = float(current_price)
             estimated_gain_per_stock = (projected_price_next_month - current_price) * quantity
+            estimated_gain_per_stock = float(estimated_gain_per_stock)
             
             total_estimated_gain += estimated_gain_per_stock
 
