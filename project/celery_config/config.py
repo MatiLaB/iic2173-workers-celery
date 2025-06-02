@@ -30,7 +30,7 @@ worker_prefetch_multiplier = 1
 CELERY_BEAT_SCHEDULE = {
     'every-1-minutes_add': {
         'task': 'celery_config.tasks.add',
-        'schedule': crontab(minute='*/1a'), # every 1 minute
+        'schedule': crontab(minute='*/1'), # every 1 minute
         'args': (16, 16),
     },
 }
