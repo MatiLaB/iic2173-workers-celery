@@ -1,28 +1,37 @@
 services:
   redis-broker:
-    image: redis:7 
-    container_name: job_master_redis_broker 
+    image: redis:7
+    container_name: job_master_redis_broker
     ports:
-      - "6379:6379" 
-    command: redis-server --appendonly yes 
+      - "6379:6379"
+    command: redis-server --appendonly yes
     volumes:
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf 
-      - redis_data:/data 
-
-  db: # The database service
-    image: postgres # Using the oficial dockerhub image
-    container_name: postgres
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
     networks:
-      - api-network # Connect to the network to be used by other containers (ej: the web server)
-    environment: # all the enviroment variables defined in the container (see postgres official image docs https://hub.docker.com/_/postgres)
+      - api-network
+
+  postgres:
+    image: postgres:13
+    container_name: job_master_postgres
+    ports:
+      - "3000:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: stocks_db
-    
     volumes:
-      # To persist the data in the database we have a volume that persist after container deletion
-      # and copy the files from the container to the volume.
-      - db-volume:/var/lib/postgresql/data 
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   jobmaster:
     build:
@@ -35,21 +44,23 @@ services:
     volumes:
       - ./project:/app
     depends_on:
-      - redis-broker
-      - db 
+      redis-broker:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy # Esperar a que Postgres también esté saludable
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: db
+      DB_HOST: postgres # Usa el nombre del servicio de PostgreSQL
       DB_PORT: ${DB_PORT}
       REDIS_HOST: redis-broker
       REDIS_PORT: ${REDIS_PORT}
       REDIS_DB: ${REDIS_DB}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-    networks: # Añade la red también para este servicio
+    networks:
       - api-network
 
   worker:
@@ -61,16 +72,18 @@ services:
     volumes:
       - ./project:/app
     depends_on:
-      - redis-broker
-      - db 
+      redis-broker:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: db 
+      DB_HOST: postgres # Usa el nombre del servicio de PostgreSQL
       DB_PORT: ${DB_PORT}
-      REDIS_HOST: redis-broker 
+      REDIS_HOST: redis-broker
       REDIS_PORT: ${REDIS_PORT}
       REDIS_DB: ${REDIS_DB}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
@@ -87,28 +100,28 @@ services:
     volumes:
       - ./project:/app
     depends_on:
-      - redis-broker
-      - db 
+      redis-broker:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: db
+      DB_HOST: postgres # Usa el nombre del servicio de PostgreSQL
       DB_PORT: ${DB_PORT}
-      REDIS_HOST: redis-broker 
+      REDIS_HOST: redis-broker
       REDIS_PORT: ${REDIS_PORT}
       REDIS_DB: ${REDIS_DB}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-    networks: 
+    networks:
       - api-network
-
 
 networks:
   api-network:
 
-
 volumes:
   redis_data:
-  db-volume: 
+  postgres_data:

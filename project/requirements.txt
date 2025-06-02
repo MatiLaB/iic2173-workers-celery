@@ -1,5 +1,5 @@
 alembic==1.11.1
-celery[redis]==5.2.7
+celery[redis]
 fastapi==0.95.2
 flower==1.2.0
 python-dotenv==1.0.0
