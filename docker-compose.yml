@@ -24,54 +24,6 @@ services:
       # and copy the files from the container to the volume.
       - db-volume:/var/lib/postgresql/data 
 
-
-  # producer:
-  #   build:
-  #     context: ./project
-  #     dockerfile: Dockerfile
-  #   command: uvicorn producer:app --reload --host 0.0.0.0 --port 8000
-  #   volumes:
-  #     - ./project:/app
-  #   ports:
-  #     - '8002:8000'
-  #   environment:
-  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-  #   depends_on:
-  #     - redis-broker
-
-  # consumer:
-  #   build:
-  #     context: ./project
-  #     dockerfile: Dockerfile
-  #   deploy:
-  #     replicas: 2
-  #   command: celery -A consumer.celery_app worker --loglevel=INFO --purge --concurrency=1
-  #   volumes:
-  #     - ./project:/app
-  #   depends_on:
-  #     - redis-broker
-  #     - postgres
-  #   environment:
-  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-
-  # dashboard:
-  #   build:
-  #     context: ./project
-  #     dockerfile: Dockerfile
-  #   command: bash -c "sleep 10; celery -A consumer.celery_app flower --loglevel=INFO --url_prefix=dashboard;"
-  #   ports:
-  #     - '5555:5555'
-  #   volumes:
-  #     - ./project:/app
-  #   depends_on:
-  #     - consumer
-  #     - redis-broker
-  #   environment:
-  #     CELERY_BROKER_URL: ${CELERY_BROKER_URL}
-  #     CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
-
   jobmaster:
     build:
       context: ./project
@@ -84,19 +36,21 @@ services:
       - ./project:/app
     depends_on:
       - redis-broker
-      - postgres
+      - db 
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
+      DB_HOST: db
       DB_PORT: ${DB_PORT}
-      REDIS_HOST: ${REDIS_HOST}
+      REDIS_HOST: redis-broker
       REDIS_PORT: ${REDIS_PORT}
       REDIS_DB: ${REDIS_DB}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+    networks: # Añade la red también para este servicio
+      - api-network
 
   worker:
     build:
@@ -108,19 +62,21 @@ services:
       - ./project:/app
     depends_on:
       - redis-broker
-      - postgres
+      - db 
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
+      DB_HOST: db 
       DB_PORT: ${DB_PORT}
-      REDIS_HOST: ${REDIS_HOST}
+      REDIS_HOST: redis-broker 
       REDIS_PORT: ${REDIS_PORT}
       REDIS_DB: ${REDIS_DB}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+    networks:
+      - api-network
 
   celery_beat:
     build:
@@ -132,20 +88,27 @@ services:
       - ./project:/app
     depends_on:
       - redis-broker
-      - postgres
+      - db 
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
+      DB_HOST: db
       DB_PORT: ${DB_PORT}
-      REDIS_HOST: ${REDIS_HOST}
+      REDIS_HOST: redis-broker 
       REDIS_PORT: ${REDIS_PORT}
       REDIS_DB: ${REDIS_DB}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+    networks: 
+      - api-network
+
+
+networks:
+  api-network:
+
 
 volumes:
   redis_data:
-  postgres_data:
+  db-volume: 
