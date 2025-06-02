@@ -22,9 +22,9 @@ services:
     ports:
       - "3005:5432" 
     environment:
-      POSTGRES_DB: stocks_db
-      POSTGRES_USER: stock_user
-      POSTGRES_PASSWORD: stock_pass
+      POSTGRES_DB: 'stocks_db'
+      POSTGRES_USER: 'stock_user'
+      POSTGRES_PASSWORD: 'stock_pass'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
