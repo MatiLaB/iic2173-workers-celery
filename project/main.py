@@ -5,6 +5,8 @@ from celery.result import AsyncResult
 import os
 import uuid
 
+from fastapi.middleware.cors import CORSMiddleware 
+
 from celery_config import config
 
 celery_app = Celery(
@@ -25,6 +27,22 @@ app = FastAPI(
     title="JobMaster Service for Stock Estimations",
     description="API for managing and tracking asynchronous stock estimation jobs.",
     version="1.0.0"
+)
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000", 
+    "http://localhost:3002",
+    "http://localhost:3001", 
+
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,      
+    allow_credentials=True,      
+    allow_methods=["*"], 
+    allow_headers=["*"],        
 )
 
 # Modelo de Pydantic para la entrada del POST /job
