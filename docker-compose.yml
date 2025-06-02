@@ -24,7 +24,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_db_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -34,6 +34,8 @@ services:
       retries: 5
     networks:
       - api-network
+    secrets:
+      - postgres_db_password
 
   jobmaster:
     build:
@@ -49,13 +51,12 @@ services:
       redis-broker:
         condition: service_healthy
       postgres:
-        condition: service_healthy # Esperar a que Postgres también esté saludable
+        condition: service_healthy
     environment:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: postgres # Usa el nombre del servicio de PostgreSQL
+      DB_HOST: postgres
       DB_PORT: ${DB_PORT}
       REDIS_HOST: redis-broker
       REDIS_PORT: ${REDIS_PORT}
@@ -64,6 +65,8 @@ services:
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
     networks:
       - api-network
+    secrets:
+      - postgres_db_password
 
   worker:
     build:
@@ -82,8 +85,7 @@ services:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: postgres # Usa el nombre del servicio de PostgreSQL
+      DB_HOST: postgres
       DB_PORT: ${DB_PORT}
       REDIS_HOST: redis-broker
       REDIS_PORT: ${REDIS_PORT}
@@ -92,6 +94,8 @@ services:
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
     networks:
       - api-network
+    secrets:
+      - postgres_db_password
 
   celery_beat:
     build:
@@ -110,8 +114,7 @@ services:
       PYTHONUNBUFFERED: 1
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: postgres # Usa el nombre del servicio de PostgreSQL
+      DB_HOST: postgres
       DB_PORT: ${DB_PORT}
       REDIS_HOST: redis-broker
       REDIS_PORT: ${REDIS_PORT}
@@ -120,10 +123,17 @@ services:
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
     networks:
       - api-network
+    secrets: 
+      - postgres_db_password
 
 networks:
   api-network:
+    driver: overlay
 
 volumes:
   redis_data:
   postgres_data:
+
+secrets:
+  postgres_db_password:
+    external: true 
