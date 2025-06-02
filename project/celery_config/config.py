@@ -1,6 +1,6 @@
 from celery.schedules import crontab
 
-from project import database
+from .. import database
 
 # https://docs.celeryq.dev/en/3.1/configuration.html
 accept_content = ['application/json']
