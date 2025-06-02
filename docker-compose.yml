@@ -20,11 +20,11 @@ services:
     image: postgres:13
     container_name: job_master_postgres
     ports:
-      - "3005:5432"
+      - "3005:5432" 
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_db_password
+      POSTGRES_DB: stocks_db
+      POSTGRES_USER: stock_user
+      POSTGRES_PASSWORD: stock_pass
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -34,8 +34,6 @@ services:
       retries: 5
     networks:
       - api-network
-    secrets:
-      - postgres_db_password
 
   jobmaster:
     build:
@@ -47,13 +45,17 @@ services:
       - "8000:8000"
     volumes:
       - ./project:/app
-    depends_on: 
-      - redis-broker
-      - postgres
+    depends_on:
+      redis-broker:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       PYTHONUNBUFFERED: 1
+      AWS_REGION: us-east-1
       # DB_NAME: ${DB_NAME}
       # DB_USER: ${DB_USER}
+      # DB_PASSWORD: ${DB_PASSWORD}
       # DB_HOST: postgres
       # DB_PORT: ${DB_PORT}
       # REDIS_HOST: redis-broker
@@ -63,24 +65,26 @@ services:
       # CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
     networks:
       - api-network
-    # secrets: # Ya no necesitas montar el secreto de Docker Swarm si tu aplicación lo lee de AWS Secrets Manager
-    #   - postgres_db_password # Esto era para que la aplicación lo leyera de un secreto de Swarm. Ahora lo lee de AWS Secrets Manager.
 
   worker:
     build:
       context: ./project
       dockerfile: Dockerfile
-    container_name: job_master_celery_worker_1 
+    container_name: job_master_celery_worker_1
     command: celery -A consumer.celery_app worker --loglevel=info
     volumes:
       - ./project:/app
-    depends_on: 
-      - redis-broker
-      - postgres
+    depends_on:
+      redis-broker:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       PYTHONUNBUFFERED: 1
+      AWS_REGION: us-east-1
       # DB_NAME: ${DB_NAME}
       # DB_USER: ${DB_USER}
+      # DB_PASSWORD: ${DB_PASSWORD}
       # DB_HOST: postgres
       # DB_PORT: ${DB_PORT}
       # REDIS_HOST: redis-broker
@@ -90,24 +94,26 @@ services:
       # CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
     networks:
       - api-network
-    # secrets:
-    #   - postgres_db_password
 
   celery_beat:
     build:
       context: ./project
       dockerfile: Dockerfile
-    container_name: job_master_celery_beat 
+    container_name: job_master_celery_beat
     command: celery -A consumer.celery_app beat --loglevel=info
     volumes:
       - ./project:/app
     depends_on:
-      - redis-broker
-      - postgres
+      redis-broker:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       PYTHONUNBUFFERED: 1
+      AWS_REGION: us-east-1 
       # DB_NAME: ${DB_NAME}
       # DB_USER: ${DB_USER}
+      # DB_PASSWORD: ${DB_PASSWORD}
       # DB_HOST: postgres
       # DB_PORT: ${DB_PORT}
       # REDIS_HOST: redis-broker
@@ -117,17 +123,10 @@ services:
       # CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
     networks:
       - api-network
-    # secrets:
-    #   - postgres_db_password
 
 networks:
   api-network:
-    driver: overlay
 
 volumes:
   redis_data:
   postgres_data:
-
-secrets:
-  postgres_db_password:
-    external: true
