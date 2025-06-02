@@ -32,7 +32,7 @@ try:
 except Exception as e:
     print(f"ADVERTENCIA: No se pudo cargar la configuración de AWS Secrets Manager. La aplicación intentará usar variables de entorno del sistema. Error: {e}")
 
--
+
 DB_NAME = _app_config.get("DB_NAME", os.getenv("DB_NAME", "name_db_stocks"))
 DB_USER = _app_config.get("DB_USER", os.getenv("DB_USER", "user_stocks"))
 DB_PASSWORD = _app_config.get("DB_PASSWORD", os.getenv("DB_PASSWORD", "stock_password"))
