@@ -4,8 +4,8 @@ from celery import Celery
 from celery.result import AsyncResult
 import os
 import uuid
-from .database import get_db, Session 
-from .database import Base 
+from database import get_db, Session 
+from database import Base 
 from fastapi.middleware.cors import CORSMiddleware 
 from model import UserEstimation
 
