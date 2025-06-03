@@ -8,7 +8,7 @@ from database import get_db
 from sqlalchemy.orm import Session 
 from database import Base 
 from fastapi.middleware.cors import CORSMiddleware 
-from model import UserEstimation
+from models import UserEstimation
 
 from celery_config import config
 
