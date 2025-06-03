@@ -1,14 +1,10 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from celery import Celery
 from celery.result import AsyncResult
 import os
 import uuid
-from database import get_db
-from sqlalchemy.orm import Session 
-from database import Base 
 from fastapi.middleware.cors import CORSMiddleware 
-from models import UserEstimation
 
 from celery_config import config
 
@@ -102,17 +98,3 @@ async def get_job_status(job_id: str):
             }
 
 
-@app.get("/estimations/{purchase_id}")
-async def get_estimation_by_purchase_id(purchase_id: str, db: Session = Depends(get_db)):
-
-    estimation = db.query(UserEstimation).filter(UserEstimation.purchase_id == purchase_id).first()
-
-    if estimation:
-        return {
-            "status": "COMPLETED",
-            "total_estimated_gain": estimation.total_estimated_gain,
-            "detailed_estimations": estimation.detailed_estimations_json,
-            "created_at": estimation.created_at.isoformat() # Convertir fecha a string ISO
-        }
-    else:
-        return {"status": "NOT_FOUND", "message": "Estimación no encontrada para este purchase_id."}
