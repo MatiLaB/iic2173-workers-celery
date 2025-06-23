@@ -32,10 +32,12 @@ app = FastAPI(
 
 origins = [
     "http://localhost",
-    "http://localhost:3000", 
+    "http://localhost:3000",
     "http://localhost:3001",
-    "http://localhost:3002", 
+    "http://localhost:3002",
     "http://127.0.0.1:3002",
+    "https://arquisistem.me",
+    "https://www.arquisistem.me",
 
 ]
 
