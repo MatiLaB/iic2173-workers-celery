@@ -4,13 +4,16 @@ from .controllers import (
     calculate_linear_approximation,
     get_stock_data_from_db,
     save_estimation_to_db,
-    sum_to_n
+    sum_to_n,
+    fetch_stock_data_from_api
 )
 
 # standard
 import time
 import math 
 import numpy as np 
+import requests 
+import os 
 
 # The "shared_task" decorator allows creation
 # of Celery tasks for reusable apps as it doesn't
@@ -39,7 +42,7 @@ def estimate_stock_gains_job(user_id: str, purchase_id: str, stocks_purchased: d
     for symbol, quantity in stocks_purchased.items():
         print(f"Procesando stock: {symbol} (cantidad: {quantity})")
         try:
-            historical_prices = get_stock_data_from_db(user_id, symbol)
+            historical_prices = fetch_stock_data_from_api(symbol)
             current_purchase_price = purchase_prices.get(symbol)
             if current_purchase_price is None:
                 print(f"Advertencia: Precio de compra no encontrado para {symbol}. Saltando estimación para este stock.")
@@ -62,10 +65,17 @@ def estimate_stock_gains_job(user_id: str, purchase_id: str, stocks_purchased: d
                 }
                 continue
 
+            processed_historical_data = []
+            for item in historical_prices:
+                try:
+                    dt_object = datetime.fromisoformat(item['timestamp'].replace('Z', '+00:00'))
+                    processed_historical_data.append((dt_object.timestamp(), item['price']))
+                except (ValueError, KeyError) as ve:
+                    print(f"Error procesando timestamp/precio para {symbol}: {ve} en item {item}")
+                    continue
 
-            projected_price_next_month_np = calculate_linear_approximation(
-                [(item['timestamp'], item['price']) for item in historical_prices]
-            )
+
+            projected_price_next_month_np = calculate_linear_approximation(processed_historical_data)
             projected_price_next_month = float(projected_price_next_month_np)
 
             estimated_gain_per_stock = (projected_price_next_month - current_purchase_price) * quantity

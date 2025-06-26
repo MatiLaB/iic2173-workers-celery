@@ -53,6 +53,7 @@ services:
     environment:
       PYTHONUNBUFFERED: 1
       AWS_REGION: us-east-1
+      API_URL: http://107.22.21.165:3000
       # DB_NAME: ${DB_NAME}
       # DB_USER: ${DB_USER}
       # DB_PASSWORD: ${DB_PASSWORD}
@@ -82,6 +83,7 @@ services:
     environment:
       PYTHONUNBUFFERED: 1
       AWS_REGION: us-east-1
+      API_URL: http://107.22.21.165:3000
       # DB_NAME: ${DB_NAME}
       # DB_USER: ${DB_USER}
       # DB_PASSWORD: ${DB_PASSWORD}
@@ -111,6 +113,7 @@ services:
     environment:
       PYTHONUNBUFFERED: 1
       AWS_REGION: us-east-1 
+      API_URL: http://107.22.21.165:3000
       # DB_NAME: ${DB_NAME}
       # DB_USER: ${DB_USER}
       # DB_PASSWORD: ${DB_PASSWORD}

@@ -67,32 +67,32 @@ async def create_job(purchase_data: StockPurchaseData):
     if not purchase_data.purchase_id:
         purchase_data.purchase_id = str(uuid.uuid4())
     
-    db: Session = SessionLocal()
-    try: 
-        current_timestamp = datetime.now()
+    # db: Session = SessionLocal()
+    # try: 
+    #     current_timestamp = datetime.now()
 
-        for symbol, quantity in purchase_data.stocks.items():
-            if hasattr(purchase_data, 'prices') and isinstance(purchase_data.prices, dict) and symbol in purchase_data.prices:
-                price_at_purchase = purchase_data.prices[symbol]
-            else:
-                price_at_purchase = 0 
+    #     for symbol, quantity in purchase_data.stocks.items():
+    #         if hasattr(purchase_data, 'prices') and isinstance(purchase_data.prices, dict) and symbol in purchase_data.prices:
+    #             price_at_purchase = purchase_data.prices[symbol]
+    #         else:
+    #             price_at_purchase = 0 
 
-            new_price_record = StockPriceHistory(
-                user_id=purchase_data.user_id,
-                symbol=symbol,
-                timestamp=current_timestamp,
-                price=price_at_purchase
-            )
-            db.add(new_price_record)
+    #         new_price_record = StockPriceHistory(
+    #             user_id=purchase_data.user_id,
+    #             symbol=symbol,
+    #             timestamp=current_timestamp,
+    #             price=price_at_purchase
+    #         )
+    #         db.add(new_price_record)
 
-        db.commit()
+    #     db.commit()
 
-    except Exception as e:
-        db.rollback()
-        print(f"Error al guardar datos de compra en StockPriceHistory: {e}")
-        raise HTTPException(status_code=500, detail=f"Error interno al procesar el job: {e}")
-    finally:
-        db.close()
+    # except Exception as e:
+    #     db.rollback()
+    #     print(f"Error al guardar datos de compra en StockPriceHistory: {e}")
+    #     raise HTTPException(status_code=500, detail=f"Error interno al procesar el job: {e}")
+    # finally:
+    #     db.close()
 
     task = celery_app.send_task(
         'celery_config.tasks.estimate_stock_gains_job',

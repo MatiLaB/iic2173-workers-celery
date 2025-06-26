@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import StockPriceHistory, UserEstimation
+import requests 
+import os 
 
 def sum_to_n(number):
     sum = 0
@@ -83,3 +85,40 @@ def save_estimation_to_db(user_id: str, purchase_id: str, estimations: dict):
         print(f"Error al guardar estimaciones en la DB para compra {purchase_id}: {e}")
     finally:
         db.close()
+
+def fetch_stock_data_from_api(symbol: str) -> list:
+    API_URL = os.getenv('API_URL', 'http://107.22.21.165:3000') 
+    url = f"{API_URL}/stocks/{symbol}"
+    all_historical_data = []
+    page = 1
+    count = 100
+
+       
+    while True:
+        params = {'page': page, 'count': count}
+        print(f"Fetching stock data from {url} with params {params}")
+        try:
+            response = requests.get(url, params=params, timeout=15) 
+            response.raise_for_status() 
+
+            data = response.json()
+                
+            if 'data' in data and isinstance(data['data'], list):
+                if not data['data']: 
+                    break
+                all_historical_data.extend(data['data'])
+                    
+                if len(data['data']) < count:
+                    break
+                page += 1
+            else:
+                print(f"Error: Formato de respuesta inesperado de la API de stocks: {data}")
+                break 
+        except requests.exceptions.RequestException as e:
+            print(f"Error al obtener datos históricos para {symbol} de la API externa: {e}")
+            break
+        except ValueError as e: # Error al decodificar JSON
+            print(f"Error al decodificar JSON de la API de stocks: {e}")
+            break
+                
+        return all_historical_data
