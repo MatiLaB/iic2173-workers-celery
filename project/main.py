@@ -52,8 +52,9 @@ app.add_middleware(
 # Modelo de Pydantic para la entrada del POST /job
 class StockPurchaseData(BaseModel):
     user_id: str
-    purchase_id: str = None # Puede ser generado por el frontend o aquí
-    stocks: dict # e.g., {"AAPL": 10, "GOOG": 5}
+    purchase_id: str = None 
+    stocks: dict
+    prices: dict
 
 
 
@@ -95,7 +96,7 @@ async def create_job(purchase_data: StockPurchaseData):
 
     task = celery_app.send_task(
         'celery_config.tasks.estimate_stock_gains_job',
-        args=[purchase_data.user_id, purchase_data.purchase_id, purchase_data.stocks]
+        args=[purchase_data.user_id, purchase_data.purchase_id, purchase_data.stocks, purchase_data.prices]
     )
     
     return {"job_id": task.id, "message": "Job enqueued successfully."}

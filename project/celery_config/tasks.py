@@ -31,9 +31,7 @@ def sum_to_n_job(number):
     return result
 
 @shared_task
-def estimate_stock_gains_job(user_id: str, purchase_id: str, stocks_purchased: dict):
-   
-    print(f"Iniciando estimación para user_id: {user_id}, purchase_id: {purchase_id}")
+def estimate_stock_gains_job(user_id: str, purchase_id: str, stocks_purchased: dict, purchase_prices: dict):
     
     total_estimated_gain = 0
     detailed_estimations = {}
@@ -41,53 +39,59 @@ def estimate_stock_gains_job(user_id: str, purchase_id: str, stocks_purchased: d
     for symbol, quantity in stocks_purchased.items():
         print(f"Procesando stock: {symbol} (cantidad: {quantity})")
         try:
-            # Obtener datos históricos de precios para el stock.
             historical_prices = get_stock_data_from_db(user_id, symbol)
-            
-            if not historical_prices or len(historical_prices) < 2:
-                print(f"Advertencia: No hay suficientes datos para {symbol}. Saltando estimación.")
+            current_purchase_price = purchase_prices.get(symbol)
+            if current_purchase_price is None:
+                print(f"Advertencia: Precio de compra no encontrado para {symbol}. Saltando estimación para este stock.")
                 detailed_estimations[symbol] = {
                     'quantity': quantity,
                     'estimated_price_next_month': None,
                     'estimated_gain': None,
-                    'status': 'Not enough data'
+                    'status': 'Purchase price missing'
                 }
                 continue
 
-            #Calcular la aproximación lineal y proyectar el precio.
+            if not historical_prices or len(historical_prices) < 2:
+                print(f"Advertencia: No hay suficientes datos históricos para {symbol}. Saltando proyección.")
+                detailed_estimations[symbol] = {
+                    'quantity': quantity,
+                    'purchase_price': current_purchase_price, 
+                    'estimated_price_next_month': None,
+                    'estimated_gain': None,
+                    'status': 'Not enough historical data for projection'
+                }
+                continue
+
+
             projected_price_next_month_np = calculate_linear_approximation(
                 [(item['timestamp'], item['price']) for item in historical_prices]
             )
-
             projected_price_next_month = float(projected_price_next_month_np)
 
-            #Multiplicar por la cantidad comprada
-            current_price = historical_prices[-1]['price']
-            current_price = float(current_price)
-            estimated_gain_per_stock = (projected_price_next_month - current_price) * quantity
+            estimated_gain_per_stock = (projected_price_next_month - current_purchase_price) * quantity
             estimated_gain_per_stock = float(estimated_gain_per_stock)
             
             total_estimated_gain += estimated_gain_per_stock
 
             detailed_estimations[symbol] = {
                 'quantity': quantity,
-                'current_price': current_price,
+                'purchase_price': current_purchase_price, 
                 'estimated_price_next_month': projected_price_next_month,
                 'estimated_gain': estimated_gain_per_stock,
                 'status': 'Completed'
             }
-            print(f"    Estimación para {symbol}: {estimated_gain_per_stock:.2f}")
+            print(f"Estimación para {symbol}: Ganancia estimada = {estimated_gain_per_stock:.2f}")
 
         except Exception as e:
             print(f"    Error al estimar {symbol}: {e}")
             detailed_estimations[symbol] = {
                 'quantity': quantity,
+                'purchase_price': current_purchase_price,
                 'estimated_price_next_month': None,
                 'estimated_gain': None,
                 'status': f'Error: {str(e)}'
             }
 
-    #Enviar las aproximaciones y el total para que se guarden
     estimation_result = {
         'total_estimated_gain': total_estimated_gain,
         'detailed_estimations': detailed_estimations
