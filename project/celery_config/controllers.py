@@ -121,4 +121,4 @@ def fetch_stock_data_from_api(symbol: str) -> list:
             print(f"Error al decodificar JSON de la API de stocks: {e}")
             break
                 
-        return all_historical_data
+    return all_historical_data
