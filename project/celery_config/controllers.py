@@ -88,7 +88,7 @@ def save_estimation_to_db(user_id: str, purchase_id: str, estimations: dict):
 
 def fetch_stock_data_from_api(symbol: str) -> list:
     API_URL = os.getenv('API_URL', 'http://107.22.21.165:3000') 
-    url = f"{API_URL}/stocks/{symbol}"
+    url = f"{API_URL}/stock_events/{symbol}"
     all_historical_data = []
     page = 1
     count = 100
