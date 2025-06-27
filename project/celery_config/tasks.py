@@ -13,7 +13,8 @@ import time
 import math 
 import numpy as np 
 import requests 
-import os 
+import os
+from datetime import datetime 
 
 # The "shared_task" decorator allows creation
 # of Celery tasks for reusable apps as it doesn't

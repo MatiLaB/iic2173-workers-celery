@@ -6,7 +6,8 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import StockPriceHistory, UserEstimation
 import requests 
-import os 
+import os
+from datetime import datetime 
 
 def sum_to_n(number):
     sum = 0
